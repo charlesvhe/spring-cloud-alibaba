@@ -1,6 +1,7 @@
 package com.github.charlesvhe.eureka;
 
-import com.alibaba.nacos.api.annotation.NacosInjected;
+import com.alibaba.nacos.api.NacosFactory;
+import com.alibaba.nacos.api.common.Constants;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
@@ -10,15 +11,15 @@ import com.netflix.appinfo.InstanceInfo;
 import com.netflix.discovery.shared.Application;
 import com.netflix.eureka.registry.PeerAwareInstanceRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,15 +28,17 @@ import java.util.Map;
 @EnableEurekaServer
 @EnableScheduling
 public class EurekaApplication {
-
     public static final String METADATA_DISCOVERY_CLIENT = "DiscoveryClient";
-    public static final String NACOS_DEFAULT_GROUP = "DEFAULT_GROUP";
-    public static final String NACOS_DEFAULT_CLUSTER = "DEFAULT";
 
-    @NacosInjected
+    @Autowired
     private NamingService namingService;
     @Autowired
     private PeerAwareInstanceRegistry peerAwareInstanceRegistry;
+
+    @Bean
+    public NamingService nacosConfigService(@Value("${nacos.serverAddr}") String serverAddr) throws NacosException {
+        return NacosFactory.createNamingService(serverAddr);
+    }
 
     @Scheduled(fixedDelay = 10000)
     public void syncNacosAndEureka() throws Exception {
@@ -71,10 +74,10 @@ public class EurekaApplication {
                     Instance nacosInstance = new Instance();
                     nacosInstance.setIp(instance.getIPAddr());
                     nacosInstance.setPort(instance.getPort());
-                    nacosInstance.setClusterName(NACOS_DEFAULT_CLUSTER);
+                    nacosInstance.setClusterName(Constants.DEFAULT_CLUSTER_NAME);
                     nacosInstance.setMetadata(metadata);
 
-                    namingService.registerInstance(instance.getAppName().toLowerCase(), NACOS_DEFAULT_GROUP, nacosInstance);
+                    namingService.registerInstance(instance.getAppName().toLowerCase(), Constants.DEFAULT_GROUP, nacosInstance);
                 }
             }
         }
