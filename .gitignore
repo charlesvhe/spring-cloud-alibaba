@@ -1,0 +1,3 @@
+# Project exclude paths
+/eureka-proxy/target/
+/provider/target/
