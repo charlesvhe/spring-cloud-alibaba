@@ -1,3 +1,4 @@
 # Project exclude paths
-/eureka-proxy/target/
-/provider/target/
+/*/target/
+*.iml
+.idea
